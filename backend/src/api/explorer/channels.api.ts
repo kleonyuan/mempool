@@ -403,18 +403,20 @@ class ChannelsApi {
     }
   }
 
+  private getChannelStatusFilter(status: string): string {
+    if (status === 'open') {
+      return '< 2';
+    } else if (status === 'active') {
+      return '= 1';
+    } else if (status === 'closed') {
+      return '= 2';
+    }
+    throw new Error('Invalid channel status requested');
+  }
+
   public async $getChannelsForNode(public_key: string, index: number, length: number, status: string): Promise<any[]> {
     try {
-      let channelStatusFilter;
-      if (status === 'open') {
-        channelStatusFilter = '< 2';
-      } else if (status === 'active') {
-        channelStatusFilter = '= 1';
-      } else if (status === 'closed') {
-        channelStatusFilter = '= 2';
-      } else {
-        throw new Error('getChannelsForNode: Invalid status requested');
-      }
+      const channelStatusFilter = this.getChannelStatusFilter(status);
 
       // Channels originating from node
       let query = `
@@ -503,12 +505,7 @@ class ChannelsApi {
 
   public async $getChannelsCountForNode(public_key: string, status: string): Promise<any> {
     try {
-      // Default active and inactive channels
-      let statusQuery = '< 2';
-      // Closed channels only
-      if (status === 'closed') {
-        statusQuery = '= 2';
-      }
+      const statusQuery = this.getChannelStatusFilter(status);
       const query = `
         SELECT COUNT(*) AS count
         FROM channels
